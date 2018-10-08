@@ -1,64 +1,79 @@
 <template>
-  <div :class="wrapperClass">
+  <div :class="['HostedFields', wrapperClass]">
 
-    <div v-show="!hostedFieldsInstance" class="loader" id="loader-1"></div>
-
-    <div v-show="hostedFieldsInstance">
-      
-      <div class="line" v-if="collectCardHolderName">
-        <label for="cardholder">Card Holder
-          <input type="text" class="input-field" id="cardholder" name="cardholder" placeholder="Name">
-        </label>
-      </div>
-
-      <div class="line">
-        <label for="card-number">Card Number
-          <div class="input-field" id="number"></div>
-        </label>
-
-        <label for="postal" v-if="collectPostalCode">Postal Code
-          <input type="text" class="input-field" id="postal" name="postal" placeholder="11111">
-        </label>
-      </div>
-
-      <div class="line">
-        <label for="cvv">CVV
-          <div class="input-field" id="cvv"></div>
-        </label>
-
-        <label for="expiration-date">Expiration Date
-          <div class="input-field" id="expiration-date"></div>
-        </label>
-      </div>
-
+    <div v-show="!hostedFieldsInstance" class="HostedFields__loader">
+      <i class="text-primary fa fa-cog fa-spin fa-3x"></i>
     </div>
 
+    <div v-show="hostedFieldsInstance" class="HostedFields__form">
+      <div class="row">
+        <div v-if="collectCardHolderName" class="HostedFields__field HostedFields__field--cardHolder form-group col-sm-12">
+          <label class="control-label">{{ cardHolderLabel }}</label>
+          <input type="text" class="form-control" id="card-holder" name="cardholder" :placeholder="cardHolderPlaceholder">
+        </div>
+        <div class="HostedFields__field HostedFields__field--cardNumber form-group col-sm-12">
+          <label class="control-label">{{ cardNumberLabel }}</label>
+          <div class="form-control" id="card-number"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="HostedFields__field HostedFields__field--expiry form-group col-xs-6">
+          <label class="control-label">{{ cardExpiryLabel }}</label>
+          <div class="form-control" id="card-expiry"></div>
+        </div>
+        <div class="HostedFields__field HostedFields__field--cvv form-group col-xs-6">
+          <label class="control-label">{{ cardCvvLabel }}</label>
+          <div class="form-control" id="card-cvv"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
   export default {
     props: {
+      cardHolderLabel: {
+        default: 'Card holder',
+        type: String
+      },
+      cardNumberLabel: {
+        default: 'Card number',
+        type: String
+      },
+      cardExpiryLabel: {
+        default: 'Expiry',
+        type: String
+      },
+      cardCvvLabel: {
+        default: 'CVV',
+        type: String
+      },
+      cardHolderPlaceholder: {
+        default: '',
+        type: String
+      },
+      cardNumberPlaceholder: {
+        default: '',
+        type: String
+      },
+      cardExpiryPlaceholder: {
+        default: '',
+        type: String
+      },
+      cardCvvPlaceholder: {
+        default: '',
+        type: String
+      },
       authToken: {
         value: String,
       },
       wrapperClass: {
         value: String,
       },
-      loaderClass: {
-        value: String,
-      },
-      inputClass: {
-        value: String,
-      },
       collectCardHolderName: {
         value: Boolean,
-      },
-      collectPostalCode: {
-        value: Boolean,
-      },
-      enableDataCollector: {
-        value: Boolean,
+        default: false
       }
     },
     created() {
@@ -90,10 +105,6 @@
           } else {
             this.clientInstance = clientInstance
             this.createHF();
-
-            if (this.enableDataCollector) {
-              this.dataCollectorCreate();
-            }
           }
         });
       },
@@ -103,27 +114,27 @@
           client: this.clientInstance,
           styles: {
             'input': {
-              'font-size': '18px'
+              'font-size': '14px'
             },
             'input.invalid': {
-              'color': 'red'
+              'color': '#D90000'
             },
             'input.valid': {
-              'color': 'green'
+              'color': '#51A351'
             }
           },
           fields: {
             number: {
-              selector: '#number',
-              placeholder: '4111 1111 1111 1111',
+              selector: '#card-number',
+              placeholder: this.cardHolderPlaceholder,
             },
             cvv: {
-              selector: '#cvv',
-              placeholder: '123',
+              selector: '#card-cvv',
+              placeholder: this.cardCvvPlaceholder,
             },
             expirationDate: {
-              selector: '#expiration-date',
-              placeholder: '10/2019',
+              selector: '#card-expiry',
+              placeholder: this.cardExpiryPlaceholder,
             },
           },
         }, (hostedFieldsErr, hostedFieldsInstance) => {
@@ -141,18 +152,12 @@
       },
       tokenizeHF () {
         const additionalFields = {
-          cardholderName: '',
-          billingAddress: {
-            postalCode: '',
-          },
+          cardholderName: ''
         };
         if (this.collectCardHolderName) {
-          additionalFields.cardholderName = document.querySelector('#cardholder').value;
+          additionalFields.cardholderName = document.querySelector('#card-holder').value;
         }
-        if (this.collectPostalCode) {
-          additionalFields.billingAddress.postalCode = document.querySelector('#postal').value;
-        }
-        console.log(additionalFields);
+
         this.hostedFieldsInstance.tokenize(additionalFields, (tokenizeErr, payload) => {
           if (tokenizeErr) {
             this.errorMessage = 'There was an error tokenizing! Message: ' + tokenizeErr.message;
@@ -177,36 +182,16 @@
               return;
             }
         });
-      },
-      dataCollectorCreate() {
-        const dataCollector = require('braintree-web/data-collector');
-        dataCollector.create({
-          client: this.clientInstance,
-          kount: true,
-        }, (dataCollectorErr, dataCollectorInstance) => {
-          if (dataCollectorErr) {
-            this.errorMessage = 'There was an error setting up the data collector! Message: ' + dataCollectorErr.message;
-            this.$emit('bthferror', this.dataCollectorErr);
-            return;
-          }
-
-          this.$emit('device.data.payload', dataCollectorInstance.deviceData);
-          this.dataCollectorPayload = dataCollectorInstance;
-
-        });
-
       }
     },
   };
 </script>
 
 <style>
-  .loader{
-    width: 50px;
+  .HostedFields__loader {
+    width: 100%;
+    text-align: center;
     height: 50px;
-    border-radius: 100%;
-    position: relative;
-    margin: 0 auto;
   }
 
   /* LOADER 1 */

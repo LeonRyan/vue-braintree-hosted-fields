@@ -1,4 +1,5 @@
-# VueJS Braintree Hosted Fields Component
+# VueJS Braintree Hosted Fields Component (bootstrap 3)
+### Forked from https://github.com/ksherman/vue-braintree-hosted-fields
 
 Welcome!
 
@@ -165,7 +166,7 @@ export default {
 
 ### To Do:
 - [ ] options for which fields to include.
-- [ ] styles for better adapting to layout needs. 
+- [ ] styles for better adapting to layout needs.
 - [ ] card type detection with card icons.
 - [ ] support for an event bus.
 
